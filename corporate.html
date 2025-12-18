@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+/>
+
+  <title>Search Corporate Events - Event Hub</title>
+  <link rel="stylesheet" href="eventlist.css" />
+  <link rel="stylesheet" href="search.css" />
+</head>
+<body>
+<a href="home.html" title="Home" class="home-icon">
+  <i class="fas fa-home"></i>
+</a>
+
+  <h2>🏢 Discover Corporate Experiences</h2>
+
+  <div class="filters">
+    <select id="corporateTypeFilter" onchange="filterEvents()">
+      <option value="">💼 All Corporate Types</option>
+      <option value="seminar">📢 Seminar</option>
+      <option value="product launch">🚀 Product Launch</option>
+      <option value="team building">🤝 Team Building</option>
+      <option value="annual meet">📊 Annual Meet</option>
+    </select>
+
+    <input type="text" id="locationFilter" placeholder="📍 Enter location..." onkeyup="filterEvents()" />
+    <input type="date" id="dateFilter" onchange="filterEvents()" />
+  </div>
+
+  <div id="eventResults" class="event-grid hidden"></div>
+
+  <div id="animatedWelcome" class="welcome-wrapper">
+    <div class="slideshow-container">
+      <img id="slideImage" src="c1.jpg" alt="Corporate Event" />
+    </div>
+    <div class="welcome-text">
+      <h2 class="fade-in">Host Impactful Corporate Events 🎤</h2>
+      <p class="fade-in-delay">Engage your teams, launch your ideas, and build networks.</p>
+    </div>
+  </div>
+
+  <script>
+    let allEvents = [];
+
+    async function fetchEvents() {
+      try {
+        const res = await fetch("http://localhost:8088/api/corporate");
+        const data = await res.json();
+        allEvents = data;
+        filterEvents();
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    }
+
+    function filterEvents() {
+      const corporateType = document.getElementById("corporateTypeFilter").value.toLowerCase();
+      const location = document.getElementById("locationFilter").value.toLowerCase();
+      const date = document.getElementById("dateFilter").value;
+
+      const hasFilters = corporateType || location || date;
+      const welcome = document.getElementById("animatedWelcome");
+      const results = document.getElementById("eventResults");
+
+      if (!hasFilters) {
+        welcome.classList.remove("hidden");
+        results.classList.add("hidden");
+        return;
+      }
+
+      const filtered = allEvents.filter(e =>
+        e.type.toLowerCase() === "corporate" &&
+        (corporateType === "" || (e.corporateType && e.corporateType.toLowerCase().includes(corporateType))) &&
+        (location === "" || e.location.toLowerCase().includes(location)) &&
+        (date === "" || e.date === date)
+      );
+
+      displayEvents(filtered);
+    }
+
+    function displayEvents(events) {
+      const container = document.getElementById("eventResults");
+      const welcome = document.getElementById("animatedWelcome");
+
+      welcome.classList.add("hidden");
+      container.classList.remove("hidden");
+      container.innerHTML = "";
+
+      if (events.length === 0) {
+        container.innerHTML = "<p>No matching corporate events found.</p>";
+        return;
+      }
+
+      events.forEach((e, index) => {
+        const card = document.createElement("div");
+        card.className = "event-card";
+        card.style.animationDelay = `${index * 0.1}s`;
+
+        card.innerHTML = `
+          <p><strong>Type:</strong> ${e.type}${e.corporateType ? ` (${e.corporateType})` : ""}</p>
+          <p><strong>Location:</strong> ${e.location}</p>
+          <p><strong>Date:</strong> ${e.date}</p>
+          <p><strong>Price:</strong> ₹${e.price}</p>
+          <div class="card-buttons">
+            <a href="booking.html" class="btn">Book Now</a>
+            <button onclick='addToWishlist(${JSON.stringify(e)})' class="btn wishlist-btn">💖 Wishlist</button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    async function addToWishlist(eventObj) {
+      const userEmail = localStorage.getItem("userEmail");
+
+      const payload = {
+        ...eventObj,
+        email: userEmail
+      };
+
+      try {
+        const response = await fetch("http://localhost:8088/api/wishlist", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          alert("Event added to wishlist!");
+        } else {
+          alert("Failed to add to wishlist.");
+        }
+      } catch (error) {
+        console.error("Error adding to wishlist:", error);
+        alert("Error adding to wishlist.");
+      }
+    }
+
+    // Slideshow for corporate events
+    const images = ["c1.jpg", "c2.jpg", "c3.jpg"];
+    let current = 0;
+    const slideImg = document.getElementById("slideImage");
+
+    setInterval(() => {
+      current = (current + 1) % images.length;
+      slideImg.style.opacity = 0;
+      setTimeout(() => {
+        slideImg.src = images[current];
+        slideImg.style.opacity = 1;
+      }, 300);
+    }, 2000);
+
+    fetchEvents();
+  </script>
+</body>
+</html>

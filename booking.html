@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Event Booking</title>
+  <link rel="stylesheet" href="booking.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <header>
+    <h1>Book Your Event</h1>
+    <nav>
+      <a href="home.html"><i class="fas fa-home"></i></a>
+    </nav>
+  </header>
+
+  <main class="booking-container">
+    <form class="booking-form" onsubmit="handleBooking(event)">
+      <label for="fullname">Full Name:</label>
+      <input type="text" id="fullname" placeholder="Enter your full name" required />
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" placeholder="Enter your email" required />
+
+      <label for="phone">Phone Number:</label>
+      <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required pattern="[0-9]{10}" />
+
+      <label for="location">Location:</label>
+      <input type="text" id="location" name="location" placeholder="Enter event location" required />
+
+      <label for="date">Date:</label>
+      <input type="date" id="date" name="date" required />
+
+      <label for="event">Select Event:</label>
+      <select id="event" required>
+        <option value="">-- Choose an event --</option>
+        <option value="wedding">Wedding</option>
+        <option value="birthday">Birthday</option>
+        <option value="corporate">Corporate Events</option>
+        <option value="collegefest">College Fest</option>
+      </select>
+
+      <button type="submit" class="btn">Confirm Booking</button>
+    </form>
+  </main>
+
+  <footer></footer>
+
+  <script>
+    let venues = []; // Store venues fetched from backend
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Set minimum date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("date").setAttribute("min", today);
+
+      // Fetch venues from backend
+      fetch("http://localhost:8094/api/venues")
+        .then(res => res.json())
+        .then(data => {
+          venues = data; // Save venues for later use
+          console.log("Venues loaded:", venues);
+        })
+        .catch(err => console.error("Failed to fetch venues:", err));
+    });
+
+    function handleBooking(e) {
+      e.preventDefault();
+
+      const fullName = document.getElementById('fullname').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const date = document.getElementById('date').value;
+      const eventName = document.getElementById('event').value;
+
+      if (!eventName) {
+        alert("Please select an event.");
+        return;
+      }
+
+      // Find a venue that matches location and event type
+      const venue = venues.find(v => 
+        v.location.toLowerCase() === location.toLowerCase() && 
+        v.eventType.toLowerCase() === eventName.toLowerCase()
+      );
+
+      if (!venue) {
+        alert("No venue available for this location and event type.");
+        return;
+      }
+
+      const booking = {
+        userName: fullName,
+        userEmail: email,
+        bookingDate: date,
+        venueId: venue.id
+      };
+
+      console.log("Booking payload:", booking); // Debug: see booking data
+
+      fetch("http://localhost:8094/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(booking)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to book event");
+        return res.text();
+      })
+      .then(msg => {
+        alert("Booking successful!");
+        document.querySelector('.booking-form').reset();
+      })
+      .catch(err => {
+        console.error("Error:", err);
+        alert("Booking failed: " + err.message);
+      });
+    }
+  </script>
+</body>
+</html>
