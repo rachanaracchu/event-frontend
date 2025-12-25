@@ -2,19 +2,110 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-/>
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <title>Search Corporate Events - Event Hub</title>
   <link rel="stylesheet" href="eventlist.css" />
   <link rel="stylesheet" href="search.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right top, #e0f7fa, #ffe6f0);
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #a10058;
+      margin-bottom: 30px;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .filters input,
+    .filters select {
+      padding: 10px;
+      border: 2px solid #d48eb5;
+      border-radius: 10px;
+      font-size: 16px;
+      background-color: #fff0f8;
+      box-shadow: 0 0 10px rgba(255, 182, 193, 0.5);
+    }
+    .event-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .event-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
+      transition: transform 0.3s;
+      width: 280px;
+      animation: fadeIn 0.5s ease forwards;
+      opacity: 0;
+    }
+    .event-card:hover {
+      transform: scale(1.03);
+    }
+    .card-buttons {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .btn {
+      padding: 8px 12px;
+      background: linear-gradient(to right, #ff70a6, #ffb3c1);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: linear-gradient(to right, #f55, #fbb);
+      box-shadow: 0 0 10px #ff80aa;
+    }
+    .welcome-wrapper {
+      text-align: center;
+      margin-top: 40px;
+    }
+    .slideshow-container img {
+      width: 60%;
+      max-width: 600px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      transition: opacity 0.3s ease;
+    }
+    .welcome-text h2 {
+      margin-top: 20px;
+      font-size: 28px;
+      color: #a10058;
+    }
+    .welcome-text p {
+      font-size: 18px;
+      color: #555;
+    }
+    .hidden {
+      display: none;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
 </head>
 <body>
-<a href="home.html" title="Home" class="home-icon">
-  <i class="fas fa-home"></i>
-</a>
+  <a href="home.html" title="Home" class="home-icon">
+    <i class="fas fa-home"></i>
+  </a>
 
   <h2>🏢 Discover Corporate Experiences</h2>
 
@@ -46,12 +137,14 @@
   <script>
     let allEvents = [];
 
+    // Fetch events from backend
     async function fetchEvents() {
       try {
-        const res = await fetch("http://localhost:8088/api/corporate");
+        const res = await fetch("http://localhost:8075/api/event");
         const data = await res.json();
-        allEvents = data;
-        filterEvents();
+        // Filter only corporate events
+        allEvents = data.filter(e => e.type === "Corporate");
+        filterEvents(); // initial display
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -62,22 +155,26 @@
       const location = document.getElementById("locationFilter").value.toLowerCase();
       const date = document.getElementById("dateFilter").value;
 
-      const hasFilters = corporateType || location || date;
       const welcome = document.getElementById("animatedWelcome");
       const results = document.getElementById("eventResults");
 
+      const hasFilters = corporateType || location || date;
       if (!hasFilters) {
         welcome.classList.remove("hidden");
         results.classList.add("hidden");
         return;
       }
 
-      const filtered = allEvents.filter(e =>
-        e.type.toLowerCase() === "corporate" &&
-        (corporateType === "" || (e.corporateType && e.corporateType.toLowerCase().includes(corporateType))) &&
-        (location === "" || e.location.toLowerCase().includes(location)) &&
-        (date === "" || e.date === date)
-      );
+      const filtered = allEvents.filter(e => {
+        const eventType = (e.corporateType || "").toLowerCase();
+        const eventLocation = (e.location || "").toLowerCase();
+        const eventDate = e.date || "";
+        return (
+          (corporateType === "" || eventType.includes(corporateType)) &&
+          (location === "" || eventLocation.includes(location)) &&
+          (date === "" || eventDate === date)
+        );
+      });
 
       displayEvents(filtered);
     }
@@ -117,33 +214,23 @@
 
     async function addToWishlist(eventObj) {
       const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) { alert("Please login first"); return; }
 
-      const payload = {
-        ...eventObj,
-        email: userEmail
-      };
-
+      const payload = { ...eventObj, email: userEmail };
       try {
-        const response = await fetch("http://localhost:8088/api/wishlist", {
+        const response = await fetch("http://localhost:8075/api/wishlist", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-
-        if (response.ok) {
-          alert("Event added to wishlist!");
-        } else {
-          alert("Failed to add to wishlist.");
-        }
+        if (response.ok) alert("Event added to wishlist!");
+        else alert("Failed to add to wishlist.");
       } catch (error) {
         console.error("Error adding to wishlist:", error);
-        alert("Error adding to wishlist.");
       }
     }
 
-    // Slideshow for corporate events
+    // Slideshow
     const images = ["c1.jpg", "c2.jpg", "c3.jpg"];
     let current = 0;
     const slideImg = document.getElementById("slideImage");

@@ -211,7 +211,8 @@
   </select>
 
   <label>Upload Profile Image:</label>
-  <input type="file" id="profileImageInput" />
+  <input type="file" id="profileImageInput">
+
   <button type="button" onclick="uploadImage()" class="btn" id="uploadBtn" disabled>Upload Photo</button>
   <button type="button" onclick="saveProfile()" class="btn">Save Changes</button>
 </div>
@@ -231,7 +232,7 @@
     const email = localStorage.getItem("userEmail");
 
  function loadUser() {
-  fetch(`http://localhost:8045/api/user/${email}`)
+  fetch(`http://localhost:8075/api/users/${email}`)
     .then(res => res.json())
     .then(data => {
       // View Mode
@@ -280,27 +281,27 @@
       }
     }
 
-    function uploadImage() {
-      const fileInput = document.getElementById("profileImageInput");
-      if (!fileInput.files.length) {
-        Swal.fire({ icon: 'warning', title: 'Select an image first' });
-        return;
-      }
+   function uploadImage() {
+  const fileInput = document.getElementById("profileImageInput");
+  const userEmail = localStorage.getItem("userEmail");
 
-      const formData = new FormData();
-      formData.append("file", fileInput.files[0]);
-      formData.append("email", email);
+  if (!fileInput || !fileInput.files.length) {
+    alert("Select a file");
+    return;
+  }
 
-      fetch("http://localhost:8045/api/user/upload-photo", {
-        method: "POST",
-        body: formData
-      })
-      .then(res => res.text())
-      .then(msg => {
-        Swal.fire({ icon: 'success', title: 'Uploaded!', text: msg, timer: 2000, showConfirmButton: false });
-        loadUser();
-      });
-    }
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
+  formData.append("email", userEmail);
+
+  fetch("http://localhost:8075/api/users/upload-photo", {
+    method: "POST",
+    body: formData
+  })
+  .then(res => res.text())
+  .then(alert)
+  .catch(console.error);
+}
 
   function saveProfile() {
   const updatedUser = {
@@ -316,7 +317,7 @@
     return;
   }
 
-  fetch("http://localhost:8045/api/user/update", {
+  fetch("http://localhost:8075/api/users/update", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updatedUser)
@@ -337,7 +338,7 @@
         return;
       }
 
-      fetch("http://localhost:8045/api/user/change-password", {
+      fetch("http://localhost:8075/api/users/change-password", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, newPassword })

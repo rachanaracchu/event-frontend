@@ -159,8 +159,11 @@
 
     async function fetchWishlist() {
       try {
-        const response = await fetch(`http://localhost:8088/wishlist/${userEmail}`);
+        const response = await fetch(`http://localhost:8075/api/wishlist/${userEmail}`);
+        if (!response.ok) throw new Error("Failed to fetch wishlist");
+
         const data = await response.json();
+        console.log("Wishlist data:", data); // debug
         displayWishlist(data);
       } catch (error) {
         console.error("Error fetching wishlist:", error);
@@ -172,7 +175,7 @@
       const container = document.getElementById("wishlistContainer");
       container.innerHTML = "";
 
-      if (wishlist.length === 0) {
+      if (!wishlist || wishlist.length === 0) {
         container.innerHTML = "<p>No items in your wishlist yet.</p>";
         return;
       }
@@ -186,7 +189,7 @@
           <p><strong>Location:</strong> ${item.location}</p>
           <p><strong>Date:</strong> ${item.date}</p>
           <p><strong>Price:</strong> ₹${item.price}</p>
-          <button class="btn remove" onclick="removeFromWishlist(${item.id})">🗑️ Remove</button>
+          <button class="btn remove" onclick="removeFromWishlist('${item.id}')">🗑️ Remove</button>
           <a href="booking.html" class="btn book">📘 Book Now</a>
         `;
         container.appendChild(card);
@@ -205,10 +208,7 @@
 
       if (confirm.isConfirmed) {
         try {
-          const res = await fetch(`http://localhost:8088/wishlist/${id}`, {
-            method: "DELETE",
-          });
-
+          const res = await fetch(`http://localhost:8075/api/wishlist/${id}`, { method: "DELETE" });
           if (res.ok) {
             Swal.fire("Removed!", "Event removed from wishlist.", "success");
             fetchWishlist(); // Refresh list

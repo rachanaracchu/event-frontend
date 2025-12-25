@@ -314,8 +314,6 @@ header h1 {
     <thead>
       <tr>
         <th>User Name</th>
-        <th>Type</th>
-        <th>Date</th>
         <th>Location</th>
         <th>Phone</th>
         <th>Email</th>
@@ -342,7 +340,7 @@ header h1 {
   }
 
   async function fetchEvents() {
-    const res = await fetch("http://localhost:8088/api/events");
+    const res = await fetch("http://localhost:8075/api/event");
     const data = await res.json();
     const tbody = document.getElementById("eventTable");
     tbody.innerHTML = "";
@@ -385,7 +383,7 @@ header h1 {
   }
 
   async function deleteEvent(id) {
-    await fetch(`http://localhost:8088/api/events/${id}`, { method: "DELETE" });
+    await fetch(`http://localhost:8075/api/event/${id}`, { method: "DELETE" });
     fetchEvents();
   }
 
@@ -405,8 +403,8 @@ header h1 {
     else if (type === "College") event.collegeType = document.getElementById("eCollegeType").value;
 
     const url = editEventId
-      ? `http://localhost:8088/api/events/${editEventId}`
-      : `http://localhost:8088/api/events`;
+      ? `http://localhost:8075/api/event/${editEventId}`
+      : `http://localhost:8075/api/event`;
     const method = editEventId ? "PUT" : "POST";
 
     await fetch(url, {
@@ -421,7 +419,7 @@ header h1 {
     fetchEvents();
   });
   async function fetchFeedback() {
-  const res = await fetch("http://localhost:8088/api/feedback");
+  const res = await fetch("http://localhost:8075/api/feedback");
   const data = await res.json();
   const tbody = document.getElementById("feedbackTable");
   tbody.innerHTML = "";
@@ -439,11 +437,11 @@ header h1 {
 }
 
 async function deleteFeedback(id) {
-  await fetch(`http://localhost:8088/api/feedback/${id}`, { method: "DELETE" });
+  await fetch(`http://localhost:8075/api/feedback/${id}`, { method: "DELETE" });
   fetchFeedback();
 }
 async function fetchBookings() {
-  const res = await fetch("http://localhost:8088/api/bookings");
+  const res = await fetch("http://localhost:8075/api/bookings");
   const data = await res.json();
 
   console.log("Raw booking data:", data); // 🐞 Check structure
@@ -478,11 +476,11 @@ async function fetchBookings() {
   async function fetchAnalytics() {
     document.getElementById("loading")?.style?.setProperty("display", "block");
 
-    const res = await fetch("http://localhost:8088/api/events");
+    const res = await fetch("http://localhost:8075/api/event");
     const events = await res.json();
     document.getElementById("eventCount").textContent = events.length;
 
-    const feedbackRes = await fetch("http://localhost:8088/api/feedback");
+    const feedbackRes = await fetch("http://localhost:8075/api/feedback");
     const feedbacks = await feedbackRes.json();
     document.getElementById("feedbackCount").textContent = feedbacks.length;
 
@@ -602,7 +600,7 @@ async function fetchBookings() {
 
 
 async function fetchBookings() {
-  const res = await fetch("http://localhost:8088/api/bookings");
+  const res = await fetch("http://localhost:8075/api/bookings");
   const data = await res.json();
   window.allBookings = data; // store globally for filtering/export
   displayBookings(data);
@@ -619,8 +617,6 @@ function displayBookings(bookings) {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${fullName}</td>
-      <td>${eventType}</td>
-      <td>${b.date || "N/A"}</td>
       <td>${b.location || "N/A"}</td>
       <td>${b.phone || "N/A"}</td>
       <td>${b.email || "N/A"}</td>
@@ -647,28 +643,17 @@ function exportReportsToCSV() {
   a.click();
 }
 
-
 async function deleteEvent(id) {
   const confirmDelete = confirm("Are you sure you want to delete this event?");
   if (!confirmDelete) return;
 
-  try {
-    const res = await fetch(`http://localhost:8088/api/events`, {
-      method: "DELETE"
-    });
+  await fetch(`http://localhost:8075/api/event/${id}`, {
+    method: "DELETE"
+  });
 
-    if (res.ok) {
-      alert("Event deleted successfully!");
-      fetchEvents(); // refresh the list
-    } else {
-      const errorMsg = await res.text();
-      alert("Error deleting event: " + errorMsg);
-    }
-  } catch (err) {
-    console.error("Delete Error:", err);
-    alert("An error occurred while deleting the event.");
-  }
+  fetchEvents();
 }
+
 
 
   function logout() {

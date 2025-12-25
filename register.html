@@ -84,7 +84,7 @@ function handleLogin(e) {
     password: document.getElementById("login-password").value
   };
 
-  fetch("http://localhost:8088/api/auth/login", {
+  fetch("http://localhost:8075/api/users/login", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -137,7 +137,7 @@ function handleLogin(e) {
   city: document.getElementById('reg-city').value
     };
 
-    fetch("http://localhost:8088/api/auth/register", {
+    fetch("http://localhost:8075/api/users/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
